@@ -1,5 +1,5 @@
 #!/bin/sh
-# Modified finder-test.sh to use the compiled writer application
+# Modified finder-test.sh to use the pre-built writer application
 
 set -e
 set -u
@@ -34,11 +34,7 @@ if [ "$assignment" != "assignment1" ]; then
     fi
 fi
 
-# Clean and compile the writer application from the repository root
-make -C .. clean
-make -C ..
-
-# Use the newly compiled writer
+# Use the pre-built writer application (build step removed as per assignment instructions)
 for i in $(seq 1 $NUMFILES); do
     ../finder-app/writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
