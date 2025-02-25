@@ -1,7 +1,8 @@
 #!/bin/bash
 # manual-linux.sh
 # This script builds a barebones Linux kernel and root filesystem using an ARM cross-compile toolchain,
-# and prepares the output for booting in QEMU. It runs non-interactively (except for required sudo operations).
+# and prepares the output for booting in QEMU.
+# It runs non-interactively (except for required sudo operations).
 # Author: [Your Name]
 
 set -e
@@ -12,13 +13,23 @@ OUTDIR=${1:-/tmp/aeld}                       # Output directory (default: /tmp/a
 KERNEL_REPO=https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
 KERNEL_VERSION=v5.15.163
 BUSYBOX_VERSION=1_33_1
-# Set FINDER_APP_DIR to the absolute path of your finder-app directory (update if necessary)
-FINDER_APP_DIR=/home/ahmed/Assignment-2/finder-app
+# Set FINDER_APP_DIR to the absolute path of your finder-app directory.
+# In GitHub Actions, the repository is checked out into the working directory.
+FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
-# Full path to your cross-compiler binaries, with trailing dash.
-CROSS_COMPILE=/home/ahmed/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
+
+# For GitHub Actions, the cross-compiler is installed at:
+# /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/bin/
+# If running locally, adjust this path accordingly.
+if [ -d "/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/bin" ]; then
+    CROSS_COMPILE=/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
+else
+    # Fallback to local path (update as needed)
+    CROSS_COMPILE=/home/ahmed/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
+fi
 
 echo "Using output directory: ${OUTDIR}"
+echo "Using CROSS_COMPILE: ${CROSS_COMPILE}"
 mkdir -p "${OUTDIR}" || { echo "Failed to create ${OUTDIR}"; exit 1; }
 cd "${OUTDIR}"
 
@@ -125,7 +136,7 @@ ls -l "${OUTDIR}/rootfs/home"
 sed -i 's|\.\./conf/assignment.txt|/home/conf/assignment.txt|g' "${OUTDIR}/rootfs/home/finder-test.sh"
 # Replace '../finder-app/writer' with './writer'
 sed -i 's|\.\./finder-app/writer|./writer|g' "${OUTDIR}/rootfs/home/finder-test.sh"
-# Force finder-test.sh to call finder.sh using absolute path:
+# Force finder-test.sh to call finder.sh using absolute path
 sed -i 's|\./finder.sh|/home/finder.sh|g' "${OUTDIR}/rootfs/home/finder-test.sh"
 
 # 11. Set Ownership of the Root Filesystem
