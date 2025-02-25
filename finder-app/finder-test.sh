@@ -1,5 +1,8 @@
 #!/bin/sh
-# Modified finder-test.sh to use the pre-built writer application
+# Modified finder-test.sh to use pre-built writer and absolute path for finder.sh
+
+# Change directory to /home to ensure the files are found
+cd /home
 
 set -e
 set -u
@@ -7,7 +10,8 @@ set -u
 NUMFILES=10
 WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
-username=$(cat conf/username.txt)
+
+username=$(cat /home/conf/username.txt)
 
 if [ $# -ge 1 ]; then
     NUMFILES=$1
@@ -24,7 +28,7 @@ MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines a
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 rm -rf "${WRITEDIR}"
 
-assignment=$(cat ../conf/assignment.txt)
+assignment=$(cat /home/conf/assignment.txt)
 if [ "$assignment" != "assignment1" ]; then
     mkdir -p "$WRITEDIR"
     if [ -d "$WRITEDIR" ]; then
@@ -34,12 +38,13 @@ if [ "$assignment" != "assignment1" ]; then
     fi
 fi
 
-# Use the pre-built writer application (build step removed as per assignment instructions)
+# Use the pre-built writer application (in /home)
 for i in $(seq 1 $NUMFILES); do
-    ../finder-app/writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
+    ./writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
 
-OUTPUTSTRING=$(./finder.sh "$WRITEDIR" "$WRITESTR")
+# Call finder.sh using its absolute path
+OUTPUTSTRING=$(sh /home/finder.sh "$WRITEDIR" "$WRITESTR")
 rm -rf /tmp/aeld-data
 
 echo "${OUTPUTSTRING}" | grep "${MATCHSTR}"
