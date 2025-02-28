@@ -1,20 +1,26 @@
 #!/bin/sh
 # finder-test.sh for Assignment 4 integration
-# Expects the following to be installed in the target:
-#   - finder.sh, writer, finder-test.sh (and also as assignment-4-test.sh) in /usr/bin
-#   - Configuration files in /etc/finder-app/
-# It writes the finder command output to /tmp/assignment4-result.txt.
+# This script tests the finder application.
+# It assumes the following executables are in the PATH:
+#   - finder.sh
+#   - writer
+# It expects configuration files to be located in /etc/finder-app:
+#   - username.txt
+#   - assignment.txt (which should contain "assignment4")
+# The script writes the output of the finder command to /tmp/assignment4-result.txt.
 
 set -e
 set -u
 
+# Default values
 NUMFILES=10
-WRITESTR=AELD_IS_FUN
-WRITEDIR=/tmp/aeld-data
+WRITESTR="AELD_IS_FUN"
+WRITEDIR="/tmp/aeld-data"
 
-# Read configuration files from /etc/finder-app
+# Read the username from the configuration file
 username=$(cat /etc/finder-app/username.txt)
 
+# Allow overriding defaults via script parameters
 if [ $# -ge 1 ]; then
     NUMFILES=$1
 fi
@@ -22,7 +28,7 @@ if [ $# -ge 2 ]; then
     WRITESTR=$2
 fi
 if [ $# -ge 3 ]; then
-    WRITEDIR=/tmp/aeld-data/$3
+    WRITEDIR=$3
 fi
 
 MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines are ${NUMFILES}"
@@ -30,33 +36,32 @@ MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines a
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 rm -rf "${WRITEDIR}"
 
+# Verify that the assignment configuration is correct
 assignment=$(cat /etc/finder-app/assignment.txt)
 if [ "$assignment" != "assignment4" ]; then
+    echo "Warning: Expected assignment to be 'assignment4', but got '$assignment'"
     mkdir -p "$WRITEDIR"
-    if [ -d "$WRITEDIR" ]; then
-        echo "$WRITEDIR created"
-    else
-        exit 1
-    fi
 fi
 
-# Use the writer application (assumed to be in PATH)
+# Use the writer command to create files
 for i in $(seq 1 $NUMFILES); do
     writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
 
-# Call finder.sh (assumed to be in PATH)
+# Run the finder command (finder.sh should be in the PATH)
 OUTPUTSTRING=$(finder.sh "$WRITEDIR" "$WRITESTR")
-rm -rf /tmp/aeld-data
+rm -rf "${WRITEDIR}"
 
+# Write the output to /tmp/assignment4-result.txt
 echo "${OUTPUTSTRING}" > /tmp/assignment4-result.txt
 
+# Check that the output contains the expected match string
 echo "${OUTPUTSTRING}" | grep "${MATCHSTR}"
 if [ $? -eq 0 ]; then
     echo "success"
     exit 0
 else
-    echo "failed: expected ${MATCHSTR} in ${OUTPUTSTRING}"
+    echo "failed: expected ${MATCHSTR} in output: ${OUTPUTSTRING}"
     exit 1
 fi
 
