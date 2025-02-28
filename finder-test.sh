@@ -1,9 +1,14 @@
 #!/bin/sh
 # finder-test.sh for Assignment 4 integration
-# This script expects the following to be installed in the target:
-#   - finder.sh, writer, finder-test.sh in /usr/bin
-#   - Configuration files in /etc/finder-app
-# It writes the finder command output to /tmp/assignment4-result.txt.
+# This script tests the finder application.
+# It assumes the following executables are available in the PATH:
+#   - finder.sh
+#   - writer
+# And it expects configuration files in /etc/finder-app:
+#   - username.txt
+#   - assignment.txt (which should contain "assignment4")
+#
+# The script writes the output of the finder command to /tmp/assignment4-result.txt.
 
 set -e
 set -u
@@ -12,6 +17,7 @@ NUMFILES=10
 WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
 
+# Read configuration from /etc/finder-app
 username=$(cat /etc/finder-app/username.txt)
 
 if [ $# -ge 1 ]; then
@@ -29,8 +35,9 @@ MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines a
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 rm -rf "${WRITEDIR}"
 
+# Ensure the assignment configuration is correct.
 assignment=$(cat /etc/finder-app/assignment.txt)
-if [ "$assignment" != "assignment1" ]; then
+if [ "$assignment" != "assignment4" ]; then
     mkdir -p "$WRITEDIR"
     if [ -d "$WRITEDIR" ]; then
         echo "$WRITEDIR created"
@@ -39,12 +46,12 @@ if [ "$assignment" != "assignment1" ]; then
     fi
 fi
 
-# Use writer application (assumed to be in PATH, e.g., /usr/bin)
+# Use the writer command (assumed to be in the PATH)
 for i in $(seq 1 $NUMFILES); do
     writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
 
-# Call finder.sh (assumed to be in PATH, e.g., /usr/bin)
+# Call finder.sh (assumed to be in the PATH)
 OUTPUTSTRING=$(finder.sh "$WRITEDIR" "$WRITESTR")
 rm -rf /tmp/aeld-data
 
