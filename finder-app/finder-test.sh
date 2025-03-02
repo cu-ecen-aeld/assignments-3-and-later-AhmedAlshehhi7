@@ -1,54 +1,59 @@
 #!/bin/sh
+# finder-test.sh: Test script for the finder and writer utilities.
+# This script writes a specified number of files containing a given string,
+# then runs finder.sh to count the files and matching lines.
+# Configuration files are expected in /etc/finder-app/conf.
 
 set -e
 set -u
 
+# Default values
 NUMFILES=10
-WRITESTR=AELD_IS_FUN
-WRITEDIR=/tmp/aeld-data
-username=$(cat /etc/finder-app/conf/username.txt)
+WRITESTR="AELD_IS_FUN"
+WRITEDIR="/tmp/aeld-data"
 
-if [ $# -lt 3 ]
-then
-	echo "Using default value ${WRITESTR} for string to write"
-	if [ $# -lt 1 ]
-	then
-		echo "Using default value ${NUMFILES} for number of files to write"
-	else
-		NUMFILES=$1
-	fi	
-else
-	NUMFILES=$1
-	WRITESTR=$2
-	WRITEDIR=/tmp/aeld-data/$3
+# Read configuration values
+username=$(cat /etc/finder-app/conf/username.txt)
+assignment=$(cat /etc/finder-app/conf/assignment.txt)
+
+# Override defaults if command line arguments are provided
+if [ "$#" -ge 1 ]; then
+    NUMFILES=$1
+fi
+if [ "$#" -ge 2 ]; then
+    WRITESTR=$2
+fi
+if [ "$#" -ge 3 ]; then
+    WRITEDIR="/tmp/aeld-data/$3"
 fi
 
 MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines are ${NUMFILES}"
 
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 
+# Remove any previous directory
 rm -rf "${WRITEDIR}"
 
-# create $WRITEDIR if not assignment1
-assignment=`cat /etc/finder-app/conf/assignment.txt`
-
-if [ $assignment != 'assignment1' ]
-then
-	mkdir -p "$WRITEDIR"
-
-	#The WRITEDIR is in quotes because if the directory path consists of spaces, then variable substitution will consider it as multiple argument.
-	#This issue can also be resolved by using double square brackets i.e [[ ]] instead of using quotes.
-	if [ -d "$WRITEDIR" ]
-	then
-		echo "$WRITEDIR created"
-	else
-		exit 1
-	fi
+# Create WRITEDIR if assignment is not 'assignment1'
+if [ "$assignment" != "assignment1" ]; then
+    mkdir -p "$WRITEDIR"
+    if [ -d "$WRITEDIR" ]; then
+        echo "$WRITEDIR created"
+    else
+        echo "Failed to create $WRITEDIR" >&2
+        exit 1
+    fi
 fi
 
-for i in $( seq 1 $NUMFILES)
-do
-	writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
+# Write files using the writer utility (using its absolute path)
+i=1
+while [ $i -le $NUMFILES ]; do
+    /bin/writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
+    i=$(( i + 1 ))
 done
 
-finder.sh "$WRITEDIR" "$WRITESTR" >/tmp/assignment4-result.txt
+# Run finder.sh using its absolute path and redirect output
+/bin/finder.sh "$WRITEDIR" "$WRITESTR" > /tmp/assignment4-result.txt
+
+echo "Finder test completed. Results stored in /tmp/assignment4-result.txt"
+
